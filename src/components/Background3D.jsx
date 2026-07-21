@@ -258,9 +258,7 @@ function VinylRecord() {
     const cfg = activeIsMobile ? M_CONFIG : CONFIG;
     let kf;
 
-    if (activeIsMobile) {
-      kf = cfg.pos_Hero;
-    } else if (r <= 1) {
+    if (r <= 1) {
       kf = lerpKF(cfg.pos_Hero, cfg.pos_Tier1, r);
     } else if (r <= 2) {
       kf = lerpKF(cfg.pos_Tier1, cfg.pos_Tier2, r - 1);

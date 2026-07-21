@@ -1,23 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Music } from 'lucide-react';
 
 const WHITE_KEYS = [
-  { id: 1, note: 'C', title: 'Opus One', genre: 'Symphonic', dur: '3:42', accent: '#7aaaf0' },
-  { id: 2, note: 'D', title: 'Midnight Drive', genre: 'Electronic', dur: '4:15', accent: '#9b6fdd' },
-  { id: 3, note: 'E', title: 'Velvet Thunder', genre: 'R&B · Soul', dur: '3:18', accent: '#e09878' },
-  { id: 4, note: 'F', title: 'Neon Genesis', genre: 'Hip-Hop', dur: '2:55', accent: '#50bcd4' },
-  { id: 5, note: 'G', title: 'Golden Archive', genre: 'Jazz', dur: '2:58', accent: '#c8a030' },
-  { id: 6, note: 'A', title: 'Crystal Rain', genre: 'Ambient', dur: '5:10', accent: '#50c89a' },
-  { id: 7, note: 'B', title: 'Aurora Bloom', genre: 'Orchestral', dur: '4:44', accent: '#a870d0' },
+  { id: 1, note: 'C', title: 'Baaton Ka Silsila', genre: 'Custom Song', dur: 'Sample', accent: '#7aaaf0', src: '/music/Baaton_ka_silsila.mp3' },
+  { id: 2, note: 'D', title: 'Hamesha Tera', genre: 'Custom Song', dur: 'Sample', accent: '#9b6fdd', src: '/music/Hamesha Tera, Hamesha Mera.mp3' },
+  { id: 3, note: 'E', title: 'Intezaar', genre: 'Custom Song', dur: 'Sample', accent: '#e09878', src: '/music/Intezaar.mp3' },
+  { id: 4, note: 'F', title: 'Jaadu', genre: 'Custom Song', dur: 'Sample', accent: '#50bcd4', src: '/music/Jaadu.mp3' },
+  { id: 5, note: 'G', title: 'Khoobsurat Sa Safar', genre: 'Custom Song', dur: 'Sample', accent: '#c8a030', src: '/music/Khoobsurat Sa Safar.mp3' },
+  { id: 6, note: 'A', title: 'Mulakat', genre: 'Custom Song', dur: 'Sample', accent: '#50c89a', src: '/music/Mulakat.mp3' },
+  { id: 7, note: 'B', title: 'Pehli Mulakat', genre: 'Custom Song', dur: 'Sample', accent: '#a870d0', src: '/music/Pehli_Mulakat.mp3' },
 ];
 
 const BLACK_KEYS = [
-  { id: 8, note: 'C#', title: 'Raw Frequency', genre: 'Industrial', dur: '3:30', accent: '#e06070', posIdx: 0 },
-  { id: 9, note: 'D#', title: 'Dark Matter', genre: 'Experimental', dur: '3:55', accent: '#6880e0', posIdx: 1 },
-  { id: 10, note: 'F#', title: 'Solar Wind', genre: 'Cinematic', dur: '4:22', accent: '#e0a030', posIdx: 2 },
-  { id: 11, note: 'G#', title: 'Neon Pulse', genre: 'Synthwave', dur: '3:10', accent: '#40d0b8', posIdx: 3 },
-  { id: 12, note: 'A#', title: 'Deep Echo', genre: 'Dub · Bass', dur: '4:08', accent: '#9050c8', posIdx: 4 },
+  { id: 8, note: 'C#', title: 'Shuru Hua Tha', genre: 'Custom Song', dur: 'Sample', accent: '#e06070', posIdx: 0, src: '/music/Shuru hua tha rishton ke silsilon mein.mp3' },
+  { id: 9, note: 'D#', title: 'Zindagi Ki Kahani', genre: 'Custom Song', dur: 'Sample', accent: '#6880e0', posIdx: 1, src: '/music/Zindagi_ki_kahani.mp3' },
+  { id: 10, note: 'F#', title: 'Zindagi Ki Kitaab', genre: 'Custom Song', dur: 'Sample', accent: '#e0a030', posIdx: 2, src: '/music/Zindagi_ki_kitaab_ke _sabse_khoobsurat_panne.mp3' },
+  { id: 11, note: 'G#', title: 'Aara', genre: 'Custom Song', dur: 'Sample', accent: '#40d0b8', posIdx: 3, src: '/music/aara.mp3' },
+  { id: 12, note: 'A#', title: 'Sapna', genre: 'Custom Song', dur: 'Sample', accent: '#9050c8', posIdx: 4, src: '/music/sapna.mp3' },
 ];
 
 const WHITE_CLIPS = [
@@ -40,6 +40,7 @@ const toRgb = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)
 export default function SampleMusic() {
   const [playId, setPlayId] = useState(null);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const audioRef = useRef(typeof window !== 'undefined' ? new Audio() : null);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -47,8 +48,35 @@ export default function SampleMusic() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const play = id => setPlayId(p => p === id ? null : id);
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.onended = () => setPlayId(null);
+    }
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+      }
+    };
+  }, []);
+
   const allKeys = [...WHITE_KEYS, ...BLACK_KEYS];
+
+  const play = id => {
+    if (playId === id) {
+      if (audioRef.current) audioRef.current.pause();
+      setPlayId(null);
+    } else {
+      const key = allKeys.find(k => k.id === id);
+      if (key && audioRef.current) {
+        audioRef.current.src = key.src;
+        audioRef.current.play().catch(e => console.log('Audio error:', e));
+      }
+      setPlayId(id);
+    }
+  };
+
   const activeKey = allKeys.find(k => k.id === playId);
   const activeRgb = activeKey ? toRgb(activeKey.accent) : null;
 
