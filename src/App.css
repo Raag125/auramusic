@@ -1,0 +1,114 @@
+/* ─── App layout ─── */
+.app-container {
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.canvas-container {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ── Dynamic Musical Gradient Background ── */
+.interactive-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  background-color: transparent;
+  background-image:
+    radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      var(--mood-glow, rgba(149, 132, 196, 0.10)),
+      transparent 50%),
+    radial-gradient(900px ellipse at 20% 80%,
+      rgba(149, 132, 196, 0.04),
+      transparent 60%),
+    radial-gradient(700px ellipse at 80% 20%,
+      rgba(94, 168, 200, 0.03),
+      transparent 60%);
+  transition: background-image 1s ease;
+}
+
+/* ═══════════════════════════════════════════════
+   SECTION SCROLL-HIGHLIGHT EFFECT
+   Sections fade + glow when they enter viewport
+   ═══════════════════════════════════════════════ */
+.section-highlight {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 1.2s ease;
+  position: relative;
+}
+
+.section-highlight::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(149, 132, 196, 0), transparent);
+  transition: background 0.8s ease 0.3s;
+}
+
+.section-highlight.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-highlight.in-view::before {
+  background: linear-gradient(90deg,
+      transparent 0%,
+      var(--accent-1, rgba(149, 132, 196, 0.25)) 30%,
+      var(--accent-2, rgba(94, 168, 200, 0.2)) 70%,
+      transparent 100%);
+}
+
+/* Subtle side glow when section is active */
+.section-highlight.in-view::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to bottom,
+      transparent 10%,
+      var(--accent-1, rgba(149, 132, 196, 0.15)) 40%,
+      var(--accent-2, rgba(94, 168, 200, 0.1)) 60%,
+      transparent 90%);
+  opacity: 0;
+  animation: sideGlowIn 0.8s ease 0.4s forwards;
+}
+
+@keyframes sideGlowIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Global Mobile Typography Booster ── */
+@media (max-width: 768px) {
+  html {
+    font-size: 19px !important;
+    /* Globally scales up all rem-based typography on mobile */
+  }
+
+  .hero-panel {
+    flex-wrap: wrap;
+    /* Allows controls to wrap gracefully if needed */
+    justify-content: center;
+  }
+}
