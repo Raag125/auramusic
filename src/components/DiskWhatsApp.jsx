@@ -150,29 +150,34 @@ export default function DiskWhatsApp() {
                 </div>
 
                 {}
-                <motion.button
-                  className="wa-form-button"
-                  whileHover={{ scale: 1.05, background: CONFIG.accent, color: '#000' }}
-                  whileTap={{ scale: 0.95 }}
-                  type="submit"
-                  style={{
-                    height: '56px',
-                    padding: '0 2.5rem',
-                    borderRadius: '15px',
-                    border: `1px solid ${CONFIG.accent}`,
-                    background: 'transparent',
-                    color: CONFIG.accent,
-                    fontSize: '1rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-                  }}
-                >
-                  Connect <ArrowRight size={18} />
-                </motion.button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: 'auto' }}>
+                  <motion.button
+                    className="wa-form-button"
+                    whileHover={{ scale: 1.05, background: CONFIG.accent, color: '#000' }}
+                    whileTap={{ scale: 0.95 }}
+                    type="submit"
+                    style={{
+                      height: '56px',
+                      padding: '0 2.5rem',
+                      borderRadius: '15px',
+                      border: `1px solid ${CONFIG.accent}`,
+                      background: 'transparent',
+                      color: CONFIG.accent,
+                      fontSize: '1rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                    }}
+                  >
+                    Connect <ArrowRight size={18} />
+                  </motion.button>
+                  <div style={{ textAlign: 'center', fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontFamily: "'DM Sans', sans-serif" }}>
+                    Direct connection to WhatsApp
+                  </div>
+                </div>
               </motion.form>
             )}
           </AnimatePresence>
