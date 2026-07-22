@@ -242,7 +242,7 @@ export default function SampleMusic() {
                 onClick={() => play(id)}
                 whileTap={{ scale: 0.97 }}
                 style={{
-                  width: isBlack ? '88%' : '100%',
+                  width: isBlack ? '70%' : '100%',
                   alignSelf: 'flex-start',
                   height: isBlack ? '58px' : '75px',
                   background: isPlaying 

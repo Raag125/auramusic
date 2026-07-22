@@ -21,8 +21,10 @@ export default function MusicBackground() {
     const BLOBS = isMobile ? ALL_BLOBS.slice(0, 3) : ALL_BLOBS;
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const isMobileDevice = window.innerWidth < 768;
+      const scale = isMobileDevice ? 0.35 : 1;
+      canvas.width = window.innerWidth * scale;
+      canvas.height = window.innerHeight * scale;
     };
     resize();
     window.addEventListener('resize', resize);
@@ -31,10 +33,6 @@ export default function MusicBackground() {
 
     const draw = (t) => {
       frameCount++;
-      if (isMobile && frameCount % 2 !== 0) {
-        rafRef.current = requestAnimationFrame(draw);
-        return;
-      }
 
       const W = canvas.width;
       const H = canvas.height;
