@@ -175,7 +175,7 @@ export default function SampleMusic() {
 
       <div style={{
         width: '100%',
-        height: isMobile ? '640px' : 'auto',
+        height: isMobile ? '900px' : 'auto',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -183,11 +183,11 @@ export default function SampleMusic() {
       }}>
         <div style={{
           minWidth: isMobile ? 'auto' : '850px',
-          width: isMobile ? '640px' : '100%',
+          width: isMobile ? '860px' : '100%',
           maxWidth: '1340px',
           display: 'flex',
           flexDirection: 'column',
-          transform: isMobile ? 'rotate(90deg) scale(0.92)' : 'none',
+          transform: isMobile ? 'rotate(90deg)' : 'none',
           transformOrigin: 'center',
           transition: 'transform 0.5s ease'
         }}>
