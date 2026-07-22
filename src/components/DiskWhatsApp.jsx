@@ -238,7 +238,19 @@ export default function DiskWhatsApp() {
                   <label style={{ display: 'block', textAlign: 'center', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
                     Your Contact Number
                   </label>
-                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${focused === 'phone' ? CONFIG.accent : 'rgba(255,255,255,0.1)'}`,
+                    borderRadius: '16px',
+                    padding: '0 16px',
+                    height: '54px',
+                    boxShadow: focused === 'phone' ? `0 0 15px rgba(37, 211, 102, 0.2)` : 'none',
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    width: '100%'
+                  }}>
                     {/* Country Code Select */}
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                       <select
@@ -249,18 +261,16 @@ export default function DiskWhatsApp() {
                           setPhone('');
                         }}
                         style={{
-                          background: 'rgba(255,255,255,0.03)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: '16px',
+                          background: 'transparent',
+                          border: 'none',
                           color: '#fff',
                           fontSize: '0.9rem',
                           fontFamily: "'DM Sans', sans-serif",
-                          padding: '0 32px 0 16px',
+                          padding: '0 20px 0 0',
                           outline: 'none',
                           cursor: 'pointer',
                           appearance: 'none',
-                          height: '54px',
-                          lineHeight: '54px',
+                          fontWeight: 600
                         }}
                       >
                         {COUNTRIES.map(c => (
@@ -269,12 +279,15 @@ export default function DiskWhatsApp() {
                           </option>
                         ))}
                       </select>
-                      <span style={{ position: 'absolute', right: '12px', pointerEvents: 'none', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>▼</span>
+                      <span style={{ position: 'absolute', right: '4px', pointerEvents: 'none', fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)' }}>▼</span>
                     </div>
 
+                    {/* Divider Line */}
+                    <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.15)', margin: '0 12px 0 8px' }} />
+
                     {/* Local Phone Input */}
-                    <div style={{ position: 'relative', flex: 1 }}>
-                      <Phone size={17} color={focused === 'phone' ? CONFIG.accent : 'rgba(255,255,255,0.3)'} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', transition: 'color 0.3s' }} />
+                    <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+                      <Phone size={17} color={focused === 'phone' ? CONFIG.accent : 'rgba(255,255,255,0.3)'} style={{ marginRight: '10px', transition: 'color 0.3s', flexShrink: 0 }} />
                       <input
                         type="tel"
                         required
@@ -291,17 +304,13 @@ export default function DiskWhatsApp() {
                         maxLength={selectedCountry.length}
                         style={{
                           width: '100%',
-                          background: 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${focused === 'phone' ? CONFIG.accent : 'rgba(255,255,255,0.1)'}`,
-                          borderRadius: '16px',
-                          padding: '16px 16px 16px 48px',
+                          background: 'transparent',
+                          border: 'none',
                           color: '#fff',
                           fontSize: '0.95rem',
                           fontFamily: "'DM Sans', sans-serif",
                           outline: 'none',
-                          boxShadow: focused === 'phone' ? `0 0 15px rgba(37, 211, 102, 0.2)` : 'none',
-                          transition: 'all 0.3s ease',
-                          height: '54px'
+                          height: '100%'
                         }}
                       />
                     </div>
