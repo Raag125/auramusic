@@ -44,20 +44,20 @@ const toRgb = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)
 const MOBILE_PIANO = {
   // 1. STRETCH THE PIANO TALLER / SHORTER (Top to Bottom on screen)
   // Increase this number to stretch the piano vertically on your phone.
-  pianoHeightOnScreen: 680, 
+  pianoHeightOnScreen: 880,
 
   // 2. STRETCH THE KEYS WIDER / NARROWER (Left to Right on screen)
   // Increase this to make the keys look longer horizontally on your phone.
-  pianoWidthOnScreen: 310, 
-  
+  pianoWidthOnScreen: 360,
+
   // 3. BLACK KEY WIDTH
   // Keep this around 60% of pianoWidthOnScreen.
-  blackKeyWidthOnScreen: 185, 
+  blackKeyWidthOnScreen: 215,
 
   // 4. FINE POSITIONING
   shiftUpOrDown: 0,     // Shift piano up (-) or down (+)
   shiftLeftOrRight: 0,  // Shift piano left (-) or right (+)
-  scale: 1.0,           // Overall zoom (1.0 = 100%)
+  scale: 1.2,           // Overall zoom (1.0 = 100%, 1.2 = 120% larger)
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
