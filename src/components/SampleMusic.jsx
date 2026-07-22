@@ -42,8 +42,22 @@ const toRgb = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)
 // Edit these values to adjust the piano layout on mobile ONLY.
 // Desktop layout is completely unaffected.
 const MOBILE_PIANO = {
-  pianoHeight: 680,    // px — VISUAL HEIGHT (top-to-bottom) on mobile screen. Change this to make it taller or smaller!
-  pianoWidth: 285,     // px — VISUAL WIDTH (left-to-right) of the keys on mobile.
+  // 1. STRETCH THE PIANO TALLER / SHORTER (Top to Bottom on screen)
+  // Increase this number to stretch the piano vertically on your phone.
+  pianoHeightOnScreen: 680, 
+
+  // 2. STRETCH THE KEYS WIDER / NARROWER (Left to Right on screen)
+  // Increase this to make the keys look longer horizontally on your phone.
+  pianoWidthOnScreen: 310, 
+  
+  // 3. BLACK KEY WIDTH
+  // Keep this around 60% of pianoWidthOnScreen.
+  blackKeyWidthOnScreen: 185, 
+
+  // 4. FINE POSITIONING
+  shiftUpOrDown: 0,     // Shift piano up (-) or down (+)
+  shiftLeftOrRight: 0,  // Shift piano left (-) or right (+)
+  scale: 1.0,           // Overall zoom (1.0 = 100%)
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -184,20 +198,21 @@ export default function SampleMusic() {
 
       <div style={{
         width: '100%',
-        height: isMobile ? `${MOBILE_PIANO.pianoHeight}px` : 'auto',
+        height: isMobile ? `${MOBILE_PIANO.pianoHeightOnScreen}px` : 'auto',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: isMobile ? '0' : '30px',
-        overflow: 'hidden'
+        paddingBottom: isMobile ? '0' : '30px'
       }}>
         <div style={{
           minWidth: isMobile ? 'auto' : '850px',
-          width: isMobile ? `${MOBILE_PIANO.pianoHeight}px` : '100%',
+          width: isMobile ? `${MOBILE_PIANO.pianoHeightOnScreen}px` : '100%',
           maxWidth: '1340px',
           display: 'flex',
           flexDirection: 'column',
-          transform: isMobile ? 'rotate(90deg)' : 'none',
+          transform: isMobile
+            ? `rotate(90deg) scale(${MOBILE_PIANO.scale}) translate(${MOBILE_PIANO.shiftLeftOrRight}px, ${MOBILE_PIANO.shiftUpOrDown}px)`
+            : 'none',
           transformOrigin: 'center',
           transition: 'transform 0.5s ease'
         }}>
@@ -227,7 +242,7 @@ export default function SampleMusic() {
             { }
             <div style={{ position: 'relative' }}>
               { }
-              <div style={{ display: 'flex', gap: '2px', height: `${isMobile ? MOBILE_PIANO.whiteKeyHeight : WK_H}px` }}>
+              <div style={{ display: 'flex', gap: '2px', height: `${isMobile ? MOBILE_PIANO.pianoWidthOnScreen : WK_H}px` }}>
                 {WHITE_KEYS.map((t, i) => {
                   const isPlaying = playId === t.id;
                   const r = toRgb(t.accent);
@@ -318,7 +333,7 @@ export default function SampleMusic() {
                     style={{
                       position: 'absolute',
                       left: `calc(${BK_LEFTS[bi]}% + 1px)`,
-                      top: 0, width: `${BK_W}%`, height: `${isMobile ? MOBILE_PIANO.blackKeyHeight : BK_H}px`,
+                      top: 0, width: `${BK_W}%`, height: `${isMobile ? MOBILE_PIANO.blackKeyWidthOnScreen : BK_H}px`,
                       background: isPlaying
                         ? `linear-gradient(180deg, #282828 0%, rgba(${r},0.35) 55%, #060606 100%)`
                         : 'linear-gradient(180deg, #2c2c2c 0%, #161616 45%, #050505 100%)',
