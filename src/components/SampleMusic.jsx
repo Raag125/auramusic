@@ -41,19 +41,9 @@ const toRgb = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)
 // ─── MOBILE PIANO TWEAKS ─────────────────────────────────────────────────────
 // Edit these values to adjust the piano layout on mobile ONLY.
 // Desktop layout is completely unaffected.
-//
-// NOTE: Because the piano is ROTATED 90° on mobile:
-//   - pianoWidth    → controls the VISUAL HEIGHT of the piano on screen
-//   - whiteKeyHeight → controls how WIDE / STRETCHED the keys look
-//   - blackKeyHeight → controls how wide the black keys look (keep ~60% of whiteKeyHeight)
 const MOBILE_PIANO = {
-  containerHeight: 680,    // px — outer wrapper height (should roughly match pianoWidth)
-  pianoWidth: 680,         // px — visual HEIGHT of the piano on screen when rotated
-  whiteKeyHeight: 310,     // px — stretch this to make keys longer/wider
-  blackKeyHeight: 185,     // px — stretch this for black keys (keep ~60% of whiteKeyHeight)
-  scale: 1.0,              // extra scale factor (keep at 1.0 unless you need fine-tuning)
-  translateX: 0,           // px — shift piano left(-) or right(+) after rotation
-  translateY: 0,           // px — shift piano up(-) or down(+) after rotation
+  pianoHeight: 680,    // px — VISUAL HEIGHT (top-to-bottom) on mobile screen. Change this to make it taller or smaller!
+  pianoWidth: 285,     // px — VISUAL WIDTH (left-to-right) of the keys on mobile.
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -194,21 +184,20 @@ export default function SampleMusic() {
 
       <div style={{
         width: '100%',
-        height: isMobile ? `${MOBILE_PIANO.containerHeight}px` : 'auto',
+        height: isMobile ? `${MOBILE_PIANO.pianoHeight}px` : 'auto',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: isMobile ? '0' : '30px'
+        paddingBottom: isMobile ? '0' : '30px',
+        overflow: 'hidden'
       }}>
         <div style={{
           minWidth: isMobile ? 'auto' : '850px',
-          width: isMobile ? `${MOBILE_PIANO.pianoWidth}px` : '100%',
+          width: isMobile ? `${MOBILE_PIANO.pianoHeight}px` : '100%',
           maxWidth: '1340px',
           display: 'flex',
           flexDirection: 'column',
-          transform: isMobile
-            ? `rotate(90deg) scale(${MOBILE_PIANO.scale}) translate(${MOBILE_PIANO.translateX}px, ${MOBILE_PIANO.translateY}px)`
-            : 'none',
+          transform: isMobile ? 'rotate(90deg)' : 'none',
           transformOrigin: 'center',
           transition: 'transform 0.5s ease'
         }}>
