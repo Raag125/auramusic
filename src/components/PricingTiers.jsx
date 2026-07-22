@@ -213,6 +213,9 @@ export default function PricingTiers() {
               >
                 Choose {plan.name}
               </motion.button>
+              <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontFamily: "'DM Sans', sans-serif" }}>
+                Direct connection to WhatsApp
+              </div>
             </motion.div>
           );
         })}
