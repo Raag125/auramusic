@@ -177,7 +177,7 @@ export default function DiskWhatsApp() {
               >
                 {/* Name Input */}
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
+                  <label style={{ display: 'block', textAlign: 'center', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
                     Your Name
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -209,7 +209,7 @@ export default function DiskWhatsApp() {
 
                 {/* Contact Number Input */}
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
+                  <label style={{ display: 'block', textAlign: 'center', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
                     Your Contact Number
                   </label>
                   <div style={{ position: 'relative' }}>
