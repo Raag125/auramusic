@@ -41,12 +41,16 @@ const toRgb = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)
 // ─── MOBILE PIANO TWEAKS ─────────────────────────────────────────────────────
 // Edit these values to adjust the piano layout on mobile ONLY.
 // Desktop layout is completely unaffected.
+//
+// NOTE: After rotate(90deg), the piano's WIDTH becomes its visual HEIGHT.
+// So increasing `pianoWidth` makes the piano taller on screen.
 const MOBILE_PIANO = {
-  containerHeight: 640,   // px — height of the outer piano wrapper on mobile
-  pianoWidth: 640,        // px — width of the rotated piano element
-  scale: 0.92,            // scale factor (1 = 100%)
+  pianoWidth: 640,        // px — controls the visual HEIGHT of the piano after rotation
+  scale: 0.92,            // scale factor (1 = 100%, 0.8 = 80% size)
   translateX: 0,          // px — shift piano left(-) or right(+)
   translateY: 0,          // px — shift piano up(-) or down(+)
+  spaceAbove: 0,          // px — extra space ABOVE the piano block
+  spaceBelow: 0,          // px — extra space BELOW the piano block (before the track player)
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -175,7 +179,7 @@ export default function SampleMusic() {
   return (
     <section className="responsive-tier-section" style={{ minHeight: 'auto', padding: isMobile ? '6vh 0 5vh' : '6vh 3vw 5vh', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
 
-      {}
+      { }
       <div style={{ alignSelf: 'flex-start', marginBottom: isMobile ? '4rem' : '2.2rem', paddingLeft: isMobile ? '5vw' : '0.5vw' }}>
         <p style={{ margin: 0, fontSize: '0.62rem', letterSpacing: '0.28em', color: 'rgba(255,255,255,0.3)', fontFamily: "'DM Sans', sans-serif", textTransform: 'uppercase' }}>
           03 — Concert Series
@@ -187,11 +191,16 @@ export default function SampleMusic() {
 
       <div style={{
         width: '100%',
-        height: isMobile ? `${MOBILE_PIANO.containerHeight}px` : 'auto',
+        // After rotation, the visual height = pianoWidth * scale.
+        // We auto-size the wrapper to match — no dead space.
+        height: isMobile ? `${MOBILE_PIANO.pianoWidth * MOBILE_PIANO.scale}px` : 'auto',
+        marginTop: isMobile ? `${MOBILE_PIANO.spaceAbove}px` : '0',
+        marginBottom: isMobile ? `${MOBILE_PIANO.spaceBelow}px` : '0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: isMobile ? '0' : '30px'
+        paddingBottom: isMobile ? '0' : '30px',
+        overflow: 'hidden'
       }}>
         <div style={{
           minWidth: isMobile ? 'auto' : '850px',
@@ -225,12 +234,12 @@ export default function SampleMusic() {
               border: '1px solid rgba(255,255,255,0.06)',
             }}
           >
-            {}
+            { }
             <div style={{ height: '10px', marginBottom: '16px', background: 'linear-gradient(90deg, rgba(180,140,60,0.06), rgba(200,160,80,0.2), rgba(180,140,60,0.06))', borderRadius: '5px', border: '1px solid rgba(200,160,80,0.14)' }} />
 
-            {}
+            { }
             <div style={{ position: 'relative' }}>
-              {}
+              { }
               <div style={{ display: 'flex', gap: '2px', height: `${WK_H}px` }}>
                 {WHITE_KEYS.map((t, i) => {
                   const isPlaying = playId === t.id;
@@ -299,7 +308,7 @@ export default function SampleMusic() {
                 })}
               </div>
 
-              {}
+              { }
               {BLACK_KEYS.map((t, bi) => {
                 const isPlaying = playId === t.id;
                 const r = toRgb(t.accent);
@@ -361,27 +370,27 @@ export default function SampleMusic() {
               })}
             </div>
 
-            {}
+            { }
             <div style={{ height: '18px', background: 'linear-gradient(to bottom, #0d0d0d, #060606)', borderTop: '1px solid rgba(200,160,80,0.1)', borderRadius: '0 0 6px 6px' }} />
           </motion.div>
         </div>
       </div>
 
       {/* Track Display (Placed flat/horizontal on mobile, outside rotated keys) */}
-      <motion.div 
-        className="piano-track-display" 
-        style={{ 
-          width: isMobile ? '92vw' : '100%', 
+      <motion.div
+        className="piano-track-display"
+        style={{
+          width: isMobile ? '92vw' : '100%',
           maxWidth: '1340px',
-          background: 'rgba(6,6,10,0.96)', 
-          border: '1px solid rgba(200,160,80,0.12)', 
+          background: 'rgba(6,6,10,0.96)',
+          border: '1px solid rgba(200,160,80,0.12)',
           borderTop: isMobile ? '1px solid rgba(200,160,80,0.12)' : 'none',
-          borderRadius: isMobile ? '16px' : '0 0 12px 12px', 
-          padding: isMobile ? '16px 20px' : '12px 28px', 
-          display: 'flex', 
+          borderRadius: isMobile ? '16px' : '0 0 12px 12px',
+          padding: isMobile ? '16px 20px' : '12px 28px',
+          display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
-          alignItems: 'center', 
-          gap: isMobile ? '14px' : '18px', 
+          alignItems: 'center',
+          gap: isMobile ? '14px' : '18px',
           backdropFilter: 'blur(10px)',
           marginTop: isMobile ? '25px' : '-30px',
           zIndex: 30,
@@ -408,16 +417,16 @@ export default function SampleMusic() {
             )}
           </AnimatePresence>
         </div>
-        
+
         {activeKey && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
             <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px', textAlign: 'right' }}>{formatTime(progress)}</span>
-            <input 
-              type="range" 
+            <input
+              type="range"
               className="audio-progress"
-              min="0" 
-              max={duration || 100} 
-              value={progress} 
+              min="0"
+              max={duration || 100}
+              value={progress}
               onChange={handleSeek}
               style={{
                 flex: 1,
@@ -432,7 +441,7 @@ export default function SampleMusic() {
           <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={playPrev} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '50%', width: isMobile ? '36px' : '28px', height: isMobile ? '36px' : '28px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <SkipBack size={isMobile ? 14 : 12} color="rgba(255,255,255,0.7)" />
           </motion.button>
-          
+
           <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => play(playId || allKeys[0].id)} style={{ background: activeKey ? activeKey.accent : 'rgba(255,255,255,0.1)', borderRadius: '50%', width: isMobile ? '42px' : '32px', height: isMobile ? '42px' : '32px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: activeKey ? `0 2px 10px ${activeKey.accent}80` : 'none' }}>
             {playId ? <Pause size={isMobile ? 18 : 14} color="#fff" /> : <Play size={isMobile ? 18 : 14} color="#fff" style={{ marginLeft: '2px' }} />}
           </motion.button>
