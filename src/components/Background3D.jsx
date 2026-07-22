@@ -216,8 +216,17 @@ function VinylRecord() {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const handleScroll = () => { scrollRef.current = window.scrollY; };
+    
+    // Initialize
+    handleScroll();
+    
+    window.addEventListener('resize', handleResize, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const grooveMatA = useMemo(() => new THREE.MeshStandardMaterial({ color: CONFIG.grooveColorA, roughness: 0.2, metalness: 0.9, side: THREE.FrontSide }), []);
@@ -229,7 +238,6 @@ function VinylRecord() {
     const activeMaxScroll = window._cachedMaxScroll || Math.max(1, document.body.scrollHeight - window.innerHeight);
     const activeIsMobile = window._cachedIsMobile !== undefined ? window._cachedIsMobile : window.innerWidth < 768;
 
-    scrollRef.current = window.scrollY;
     const scroll = scrollRef.current;
 
     if (spinGroup.current) {

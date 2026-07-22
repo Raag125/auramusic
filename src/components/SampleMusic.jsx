@@ -38,18 +38,9 @@ const BK_H = 168;
 
 const toRgb = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)}`;
 
-export default function SampleMusic() {
-  const [playId, setPlayId] = useState(null);
+function AudioProgressBar({ audioRef, activeKey }) {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
-  const audioRef = useRef(typeof window !== 'undefined' ? new Audio() : null);
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -57,24 +48,18 @@ export default function SampleMusic() {
 
     const updateTime = () => setProgress(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
-    const onEnded = () => {
-      setPlayId(null);
-      diskState.isPlaying = false;
-      diskState.pauseAudio = null;
-    };
+    
+    setProgress(audio.currentTime || 0);
+    setDuration(audio.duration || 0);
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', updateDuration);
-    audio.addEventListener('ended', onEnded);
 
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
-      audio.removeEventListener('ended', onEnded);
-      audio.pause();
-      audio.src = '';
     };
-  }, []);
+  }, [audioRef, activeKey]);
 
   const formatTime = (time) => {
     if (!time || isNaN(time)) return '0:00';
@@ -90,6 +75,58 @@ export default function SampleMusic() {
       setProgress(time);
     }
   };
+
+  if (!activeKey) return null;
+
+  return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+      <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px', textAlign: 'right' }}>{formatTime(progress)}</span>
+      <input
+        type="range"
+        className="audio-progress"
+        min="0"
+        max={duration || 100}
+        value={progress}
+        onChange={handleSeek}
+        style={{
+          flex: 1,
+          background: `linear-gradient(to right, ${activeKey.accent} ${(progress / (duration || 1)) * 100}%, rgba(255,255,255,0.1) ${(progress / (duration || 1)) * 100}%)`,
+        }}
+      />
+      <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px' }}>{formatTime(duration)}</span>
+    </div>
+  );
+}
+
+export default function SampleMusic() {
+  const [playId, setPlayId] = useState(null);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const audioRef = useRef(typeof window !== 'undefined' ? new Audio() : null);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const onEnded = () => {
+      setPlayId(null);
+      diskState.isPlaying = false;
+      diskState.pauseAudio = null;
+    };
+
+    audio.addEventListener('ended', onEnded);
+
+    return () => {
+      audio.removeEventListener('ended', onEnded);
+      audio.pause();
+      audio.src = '';
+    };
+  }, []);
 
   const allKeys = [...WHITE_KEYS, ...BLACK_KEYS];
 
@@ -461,22 +498,7 @@ export default function SampleMusic() {
         </div>
 
         {activeKey && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px', textAlign: 'right' }}>{formatTime(progress)}</span>
-            <input
-              type="range"
-              className="audio-progress"
-              min="0"
-              max={duration || 100}
-              value={progress}
-              onChange={handleSeek}
-              style={{
-                flex: 1,
-                background: `linear-gradient(to right, ${activeKey.accent} ${(progress / (duration || 1)) * 100}%, rgba(255,255,255,0.1) ${(progress / (duration || 1)) * 100}%)`,
-              }}
-            />
-            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px' }}>{formatTime(duration)}</span>
-          </div>
+          <AudioProgressBar audioRef={audioRef} activeKey={activeKey} />
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '16px' : '8px', justifyContent: 'center', width: isMobile ? '100%' : 'auto' }}>
