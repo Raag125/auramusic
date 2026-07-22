@@ -8,12 +8,23 @@ const CONFIG = {
   accentDark: '#128c7e'
 };
 
+const COUNTRIES = [
+  { name: 'India', code: 'IN', dialCode: '+91', length: 10, placeholder: '98765 43210' },
+  { name: 'United States', code: 'US', dialCode: '+1', length: 10, placeholder: '201 555 0123' },
+  { name: 'United Kingdom', code: 'GB', dialCode: '+44', length: 10, placeholder: '7911 123456' },
+  { name: 'Canada', code: 'CA', dialCode: '+1', length: 10, placeholder: '613 555 0123' },
+  { name: 'Australia', code: 'AU', dialCode: '+61', length: 9, placeholder: '412 345 678' },
+  { name: 'United Arab Emirates', code: 'AE', dialCode: '+971', length: 9, placeholder: '50 123 4567' },
+  { name: 'Saudi Arabia', code: 'SA', dialCode: '+966', length: 9, placeholder: '50 123 4567' },
+];
+
 export default function DiskWhatsApp() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [sent, setSent] = useState(false);
   const [focused, setFocused] = useState(null);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -24,8 +35,14 @@ export default function DiskWhatsApp() {
   const onSend = (e) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) return;
+
+    if (phone.length !== selectedCountry.length) {
+      alert(`Please enter a valid ${selectedCountry.length}-digit phone number for ${selectedCountry.name}.`);
+      return;
+    }
     
-    const message = `Hi! I'm ${name} (Contact: ${phone}). I'm reaching out directly via your website for custom music/audio services.`;
+    const fullPhone = `${selectedCountry.dialCode}${phone}`;
+    const message = `Hi! I'm ${name} (Contact: ${fullPhone}). I'm reaching out directly via your website for custom music/audio services.`;
     window.open(`https://wa.me/919425673599?text=${encodeURIComponent(message)}`, '_blank');
     
     setSent(true);
@@ -221,30 +238,73 @@ export default function DiskWhatsApp() {
                   <label style={{ display: 'block', textAlign: 'center', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
                     Your Contact Number
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <Phone size={17} color={focused === 'phone' ? CONFIG.accent : 'rgba(255,255,255,0.3)'} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', transition: 'color 0.3s' }} />
-                    <input
-                      type="tel"
-                      required
-                      value={phone}
-                      onChange={e => setPhone(e.target.value)}
-                      onFocus={() => setFocused('phone')}
-                      onBlur={() => setFocused(null)}
-                      placeholder="Enter your contact number"
-                      style={{
-                        width: '100%',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: `1px solid ${focused === 'phone' ? CONFIG.accent : 'rgba(255,255,255,0.1)'}`,
-                        borderRadius: '16px',
-                        padding: '16px 16px 16px 48px',
-                        color: '#fff',
-                        fontSize: '0.95rem',
-                        fontFamily: "'DM Sans', sans-serif",
-                        outline: 'none',
-                        boxShadow: focused === 'phone' ? `0 0 15px rgba(37, 211, 102, 0.2)` : 'none',
-                        transition: 'all 0.3s ease'
-                      }}
-                    />
+                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                    {/* Country Code Select */}
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <select
+                        value={selectedCountry.code}
+                        onChange={e => {
+                          const country = COUNTRIES.find(c => c.code === e.target.value);
+                          setSelectedCountry(country);
+                          setPhone('');
+                        }}
+                        style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          borderRadius: '16px',
+                          color: '#fff',
+                          fontSize: '0.9rem',
+                          fontFamily: "'DM Sans', sans-serif",
+                          padding: '0 32px 0 16px',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          appearance: 'none',
+                          height: '54px',
+                          lineHeight: '54px',
+                        }}
+                      >
+                        {COUNTRIES.map(c => (
+                          <option key={c.code} value={c.code} style={{ background: '#0d0f16', color: '#fff' }}>
+                            {c.code} ({c.dialCode})
+                          </option>
+                        ))}
+                      </select>
+                      <span style={{ position: 'absolute', right: '12px', pointerEvents: 'none', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>▼</span>
+                    </div>
+
+                    {/* Local Phone Input */}
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <Phone size={17} color={focused === 'phone' ? CONFIG.accent : 'rgba(255,255,255,0.3)'} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', transition: 'color 0.3s' }} />
+                      <input
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={e => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          if (val.length <= selectedCountry.length) {
+                            setPhone(val);
+                          }
+                        }}
+                        onFocus={() => setFocused('phone')}
+                        onBlur={() => setFocused(null)}
+                        placeholder={selectedCountry.placeholder}
+                        maxLength={selectedCountry.length}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(255,255,255,0.03)',
+                          border: `1px solid ${focused === 'phone' ? CONFIG.accent : 'rgba(255,255,255,0.1)'}`,
+                          borderRadius: '16px',
+                          padding: '16px 16px 16px 48px',
+                          color: '#fff',
+                          fontSize: '0.95rem',
+                          fontFamily: "'DM Sans', sans-serif",
+                          outline: 'none',
+                          boxShadow: focused === 'phone' ? `0 0 15px rgba(37, 211, 102, 0.2)` : 'none',
+                          transition: 'all 0.3s ease',
+                          height: '54px'
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
