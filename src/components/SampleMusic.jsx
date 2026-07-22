@@ -38,6 +38,18 @@ const BK_H = 168;
 
 const toRgb = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)}`;
 
+// ─── MOBILE PIANO TWEAKS ─────────────────────────────────────────────────────
+// Edit these values to adjust the piano layout on mobile ONLY.
+// Desktop layout is completely unaffected.
+const MOBILE_PIANO = {
+  containerHeight: 640,   // px — height of the outer piano wrapper on mobile
+  pianoWidth: 640,        // px — width of the rotated piano element
+  scale: 0.92,            // scale factor (1 = 100%)
+  translateX: 0,          // px — shift piano left(-) or right(+)
+  translateY: 0,          // px — shift piano up(-) or down(+)
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function SampleMusic() {
   const [playId, setPlayId] = useState(null);
   const [progress, setProgress] = useState(0);
@@ -175,7 +187,7 @@ export default function SampleMusic() {
 
       <div style={{
         width: '100%',
-        height: isMobile ? '900px' : 'auto',
+        height: isMobile ? `${MOBILE_PIANO.containerHeight}px` : 'auto',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -183,11 +195,13 @@ export default function SampleMusic() {
       }}>
         <div style={{
           minWidth: isMobile ? 'auto' : '850px',
-          width: isMobile ? '860px' : '100%',
+          width: isMobile ? `${MOBILE_PIANO.pianoWidth}px` : '100%',
           maxWidth: '1340px',
           display: 'flex',
           flexDirection: 'column',
-          transform: isMobile ? 'rotate(90deg)' : 'none',
+          transform: isMobile
+            ? `rotate(90deg) scale(${MOBILE_PIANO.scale}) translate(${MOBILE_PIANO.translateX}px, ${MOBILE_PIANO.translateY}px)`
+            : 'none',
           transformOrigin: 'center',
           transition: 'transform 0.5s ease'
         }}>
