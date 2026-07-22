@@ -193,7 +193,8 @@ export default function PricingTiers() {
                 whileHover={{ scale: 1.02, background: plan.accent, color: '#000' }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  window.open(`https://wa.me/919425673599?text=${encodeURIComponent(`Hi, I'm interested in the ${plan.name} plan at ₹${plan.price}.`)}`, '_blank');
+                  const message = `Hi! I'm interested in the *${plan.name} Plan* (₹${plan.price}).\n\n*Plan Details:*\n${plan.features.map(f => `✅ ${f}`).join('\n')}\n\nCan we discuss further?`;
+                  window.open(`https://wa.me/919425673599?text=${encodeURIComponent(message)}`, '_blank');
                 }}
                 style={{
                   marginTop: '2.5rem',
