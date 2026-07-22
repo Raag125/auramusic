@@ -55,10 +55,19 @@ export default function Hero() {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
 
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
-  useEffect(() => { diskState.isPlaying = true; }, []);
+  useEffect(() => {
+    const onStateChange = (e) => {
+      if (e.detail) {
+        setIsPlaying(e.detail.isPlaying);
+        setIsMuted(e.detail.isMuted);
+      }
+    };
+    window.addEventListener('sampleMusic:stateChange', onStateChange);
+    return () => window.removeEventListener('sampleMusic:stateChange', onStateChange);
+  }, []);
 
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
 
@@ -67,9 +76,19 @@ export default function Hero() {
   const scale = useTransform(scrollYProgress, [0, 1], [1, 0.9]);
 
   const togglePlay = () => {
-    const next = !isPlaying;
-    setIsPlaying(next);
-    diskState.isPlaying = next;
+    window.dispatchEvent(new CustomEvent('hero:togglePlay'));
+  };
+
+  const handlePrev = () => {
+    window.dispatchEvent(new CustomEvent('hero:prev'));
+  };
+
+  const handleNext = () => {
+    window.dispatchEvent(new CustomEvent('hero:next'));
+  };
+
+  const handleMute = () => {
+    window.dispatchEvent(new CustomEvent('hero:toggleMute'));
   };
 
   return (
@@ -248,12 +267,12 @@ export default function Hero() {
           {}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'space-between' : 'flex-start', gap: '15px', width: isMobile ? '100%' : 'auto' }}>
             {}
-            <motion.div onClick={() => setIsMuted(!isMuted)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} style={{ cursor: 'pointer', display: 'flex' }}>
+            <motion.div onClick={handleMute} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} style={{ cursor: 'pointer', display: 'flex' }}>
               {isMuted ? <VolumeX size={isMobile ? 22 : 20} color="rgba(255,255,255,0.8)" strokeWidth={1.5} /> : <Volume2 size={isMobile ? 22 : 20} color="rgba(255,255,255,0.8)" strokeWidth={1.5} />}
             </motion.div>
 
             <div style={{ display: 'flex', gap: isMobile ? '24px' : '15px', alignItems: 'center' }}>
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} style={{ cursor: 'pointer', display: 'flex' }}>
+              <motion.div onClick={handlePrev} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} style={{ cursor: 'pointer', display: 'flex' }}>
                 <SkipBack size={20} color="rgba(255,255,255,0.6)" strokeWidth={1.5} />
               </motion.div>
 
@@ -287,7 +306,7 @@ export default function Hero() {
                 {!isMobile && (isPlaying ? 'PAUSE' : 'ENGAGE')}
               </motion.button>
 
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} style={{ cursor: 'pointer', display: 'flex' }}>
+              <motion.div onClick={handleNext} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} style={{ cursor: 'pointer', display: 'flex' }}>
                 <SkipForward size={20} color="rgba(255,255,255,0.6)" strokeWidth={1.5} />
               </motion.div>
               {!isMobile && (

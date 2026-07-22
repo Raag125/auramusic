@@ -54,22 +54,100 @@ export default function SampleMusic() {
     const audio = audioRef.current;
     if (!audio) return;
 
+    const allKeysList = [...WHITE_KEYS, ...BLACK_KEYS];
+
+    const broadcastState = () => {
+      const isPlaying = !audio.paused;
+      const isMuted = audio.muted;
+      const activeTrack = allKeysList.find(k => k.id === playId) || null;
+      diskState.isPlaying = isPlaying;
+
+      window.dispatchEvent(new CustomEvent('sampleMusic:stateChange', {
+        detail: { isPlaying, isMuted, activeTrack }
+      }));
+    };
+
     const updateTime = () => setProgress(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
-    const onEnded = () => setPlayId(null);
+    const onPlayPauseEnd = () => broadcastState();
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', updateDuration);
-    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('play', onPlayPauseEnd);
+    audio.addEventListener('pause', onPlayPauseEnd);
+    audio.addEventListener('ended', () => {
+      setPlayId(null);
+      broadcastState();
+    });
+
+    const onHeroTogglePlay = () => {
+      if (playId !== null && audio.src) {
+        if (audio.paused) {
+          audio.play().catch(e => console.log(e));
+        } else {
+          audio.pause();
+        }
+      } else {
+        const firstKey = WHITE_KEYS[0];
+        audio.src = firstKey.src;
+        audio.play().catch(e => console.log(e));
+        setPlayId(firstKey.id);
+      }
+    };
+
+    const onHeroPrev = () => {
+      if (playId === null) {
+        const lastKey = allKeysList[allKeysList.length - 1];
+        audio.src = lastKey.src;
+        audio.play().catch(e => console.log(e));
+        setPlayId(lastKey.id);
+        return;
+      }
+      const currentIndex = allKeysList.findIndex(k => k.id === playId);
+      const prevIndex = (currentIndex - 1 + allKeysList.length) % allKeysList.length;
+      const key = allKeysList[prevIndex];
+      audio.src = key.src;
+      audio.play().catch(e => console.log(e));
+      setPlayId(key.id);
+    };
+
+    const onHeroNext = () => {
+      if (playId === null) {
+        const firstKey = allKeysList[0];
+        audio.src = firstKey.src;
+        audio.play().catch(e => console.log(e));
+        setPlayId(firstKey.id);
+        return;
+      }
+      const currentIndex = allKeysList.findIndex(k => k.id === playId);
+      const nextIndex = (currentIndex + 1) % allKeysList.length;
+      const key = allKeysList[nextIndex];
+      audio.src = key.src;
+      audio.play().catch(e => console.log(e));
+      setPlayId(key.id);
+    };
+
+    const onHeroToggleMute = () => {
+      audio.muted = !audio.muted;
+      broadcastState();
+    };
+
+    window.addEventListener('hero:togglePlay', onHeroTogglePlay);
+    window.addEventListener('hero:prev', onHeroPrev);
+    window.addEventListener('hero:next', onHeroNext);
+    window.addEventListener('hero:toggleMute', onHeroToggleMute);
 
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
-      audio.removeEventListener('ended', onEnded);
-      audio.pause();
-      audio.src = '';
+      audio.removeEventListener('play', onPlayPauseEnd);
+      audio.removeEventListener('pause', onPlayPauseEnd);
+      window.removeEventListener('hero:togglePlay', onHeroTogglePlay);
+      window.removeEventListener('hero:prev', onHeroPrev);
+      window.removeEventListener('hero:next', onHeroNext);
+      window.removeEventListener('hero:toggleMute', onHeroToggleMute);
     };
-  }, []);
+  }, [playId]);
 
   const formatTime = (time) => {
     if (!time || isNaN(time)) return '0:00';
@@ -325,61 +403,124 @@ export default function SampleMusic() {
             </div>
 
             {}
-            <div style={{ height: '18px', background: 'linear-gradient(to bottom, #0d0d0d, #060606)', borderTop: '1px solid rgba(200,160,80,0.1)' }} />
+            <div style={{ height: '18px', background: 'linear-gradient(to bottom, #0d0d0d, #060606)', borderTop: '1px solid rgba(200,160,80,0.1)', borderRadius: '0 0 12px 12px' }} />
           </motion.div>
 
-          {}
-          <motion.div className="piano-track-display" style={{ width: '100%', background: 'rgba(6,6,10,0.96)', border: '1px solid rgba(200,160,80,0.12)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: '18px', backdropFilter: 'blur(10px)' }}>
-            <motion.div
-              animate={activeRgb && !isMobile ? { scale: [1, 1.5, 1], boxShadow: [`0 0 4px rgba(${activeRgb},0.4)`, `0 0 12px rgba(${activeRgb},0.9)`, `0 0 4px rgba(${activeRgb},0.4)`] } : {}}
-              transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-              style={{ width: '7px', height: '7px', borderRadius: '50%', background: activeKey ? activeKey.accent : 'rgba(200,160,80,0.3)', flexShrink: 0, transition: 'background 0.4s' }}
-            />
-            <AnimatePresence mode="wait">
-              {activeKey ? (
-                <motion.div key={activeKey.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: isMobile ? '80px' : '150px' }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: '0.92rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeKey.title}</span>
-                  </div>
-                  
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', padding: '0 10px' }}>
-                    <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px', textAlign: 'right' }}>{formatTime(progress)}</span>
-                    <input 
-                      type="range" 
-                      className="audio-progress"
-                      min="0" 
-                      max={duration || 100} 
-                      value={progress} 
-                      onChange={handleSeek}
-                      style={{
-                        flex: 1,
-                        background: `linear-gradient(to right, ${activeKey.accent} ${(progress / (duration || 1)) * 100}%, rgba(255,255,255,0.1) ${(progress / (duration || 1)) * 100}%)`,
-                      }}
-                    />
-                    <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px' }}>{formatTime(duration)}</span>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.7rem', color: 'rgba(200,160,80,0.38)', letterSpacing: '0.18em', textTransform: 'uppercase', flex: 1 }}>
-                  Press a key to play
-                </motion.span>
-              )}
-            </AnimatePresence>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={playPrev} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '50%', width: '28px', height: '28px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <SkipBack size={12} color="rgba(255,255,255,0.7)" />
-              </motion.button>
-              
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => play(playId || allKeys[0].id)} style={{ background: activeKey ? activeKey.accent : 'rgba(255,255,255,0.1)', borderRadius: '50%', width: '32px', height: '32px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: activeKey ? `0 2px 10px ${activeKey.accent}80` : 'none' }}>
-                {playId ? <Pause size={14} color="#fff" /> : <Play size={14} color="#fff" style={{ marginLeft: '2px' }} />}
-              </motion.button>
-
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={playNext} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '50%', width: '28px', height: '28px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <SkipForward size={12} color="rgba(255,255,255,0.7)" />
-              </motion.button>
-            </div>
-          </motion.div>
         </div>
+
+        {}
+        <motion.div
+          className="piano-track-display"
+          style={{
+            width: '100%',
+            maxWidth: isMobile ? '92vw' : '1340px',
+            background: 'rgba(6,6,10,0.96)',
+            border: '1px solid rgba(200,160,80,0.18)',
+            borderRadius: '14px',
+            padding: isMobile ? '12px 16px' : '12px 28px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: isMobile ? '12px' : '18px',
+            backdropFilter: 'blur(10px)',
+            marginTop: isMobile ? '15px' : '0',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
+          }}
+        >
+          <motion.div
+            animate={activeRgb && !isMobile ? { scale: [1, 1.5, 1], boxShadow: [`0 0 4px rgba(${activeRgb},0.4)`, `0 0 12px rgba(${activeRgb},0.9)`, `0 0 4px rgba(${activeRgb},0.4)`] } : {}}
+            transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+            style={{ width: '7px', height: '7px', borderRadius: '50%', background: activeKey ? activeKey.accent : 'rgba(200,160,80,0.3)', flexShrink: 0, transition: 'background 0.4s' }}
+          />
+          <AnimatePresence mode="wait">
+            {activeKey ? (
+              <motion.div key={activeKey.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: isMobile ? '70px' : '150px' }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: isMobile ? '0.85rem' : '0.92rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeKey.title}</span>
+                </div>
+                
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '0 4px' }}>
+                  <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px', textAlign: 'right' }}>{formatTime(progress)}</span>
+                  <input 
+                    type="range" 
+                    className="audio-progress"
+                    min="0" 
+                    max={duration || 100} 
+                    value={progress} 
+                    onChange={handleSeek}
+                    style={{
+                      flex: 1,
+                      background: `linear-gradient(to right, ${activeKey.accent} ${(progress / (duration || 1)) * 100}%, rgba(255,255,255,0.1) ${(progress / (duration || 1)) * 100}%)`,
+                    }}
+                  />
+                  <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px' }}>{formatTime(duration)}</span>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.7rem', color: 'rgba(200,160,80,0.38)', letterSpacing: '0.18em', textTransform: 'uppercase', flex: 1 }}>
+                Press a key to play
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '8px', flexShrink: 0 }}>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={playPrev}
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                borderRadius: '50%',
+                width: isMobile ? '34px' : '28px',
+                height: isMobile ? '34px' : '28px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <SkipBack size={isMobile ? 14 : 12} color="rgba(255,255,255,0.85)" />
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => play(playId || allKeys[0].id)}
+              style={{
+                background: activeKey ? activeKey.accent : 'rgba(255,255,255,0.15)',
+                borderRadius: '50%',
+                width: isMobile ? '40px' : '32px',
+                height: isMobile ? '40px' : '32px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: activeKey ? `0 2px 12px ${activeKey.accent}90` : 'none'
+              }}
+            >
+              {playId ? <Pause size={isMobile ? 16 : 14} color="#fff" fill="#fff" /> : <Play size={isMobile ? 16 : 14} color="#fff" fill="#fff" style={{ marginLeft: '2px' }} />}
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={playNext}
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                borderRadius: '50%',
+                width: isMobile ? '34px' : '28px',
+                height: isMobile ? '34px' : '28px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <SkipForward size={isMobile ? 14 : 12} color="rgba(255,255,255,0.85)" />
+            </motion.button>
+          </div>
+        </motion.div>
       </div>
 
     </section>
