@@ -14,6 +14,7 @@ import SampleMusic from './components/SampleMusic';
 import PricingTiers from './components/PricingTiers';
 import Loader from './components/Loader';
 import DiskWhatsApp from './components/DiskWhatsApp';
+import FPSMonitor from './components/FPSMonitor';
 import './App.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -110,6 +111,7 @@ function App() {
 
   return (
     <div style={{ minHeight: '100vh', width: '100vw', background: '#030308' }}>
+      <FPSMonitor />
       <AnimatePresence mode="wait">
         {loading && <Loader key="loader" onComplete={() => setLoading(false)} />}
       </AnimatePresence>

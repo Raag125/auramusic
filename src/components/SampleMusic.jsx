@@ -211,8 +211,22 @@ export default function SampleMusic() {
       </div>
 
       {isMobile ? (
-        <div style={{ width: '100%', padding: '0 4vw', display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '5px' }}>
-          {[1, 8, 2, 9, 3, 4, 10, 5, 11, 6, 12, 7].map((id, index) => {
+        <div style={{ width: '100%', padding: '0 4vw', marginTop: '5px' }}>
+          <div style={{
+            background: 'linear-gradient(160deg, #111 0%, #080808 60%, #050505 100%)',
+            padding: '16px 14px 20px',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.06)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.85)',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Top Gold Trim */}
+            <div style={{ height: '6px', marginBottom: '14px', background: 'linear-gradient(90deg, rgba(180,140,60,0.06), rgba(200,160,80,0.25), rgba(180,140,60,0.06))', borderRadius: '3px', border: '1px solid rgba(200,160,80,0.14)' }} />
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              {[1, 8, 2, 9, 3, 4, 10, 5, 11, 6, 12, 7].map((id, index) => {
             const keyData = allKeys.find(k => k.id === id);
             const isBlack = keyData.note.includes('#');
             const isPlaying = playId === id;
@@ -272,6 +286,10 @@ export default function SampleMusic() {
               </motion.div>
             );
           })}
+            </div>
+            {/* Bottom Trim */}
+            <div style={{ height: '14px', marginTop: '14px', background: 'linear-gradient(to bottom, #0d0d0d, #060606)', borderTop: '1px solid rgba(200,160,80,0.1)', borderRadius: '0 0 6px 6px' }} />
+          </div>
         </div>
       ) : (
         <div style={{
