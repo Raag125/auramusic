@@ -11,6 +11,7 @@ import Hero from './components/Hero';
 import OccasionTiers from './components/OccasionTiers';
 import VibeTiers from './components/VibeTiers';
 import SampleMusic from './components/SampleMusic';
+import PricingTiers from './components/PricingTiers';
 import Loader from './components/Loader';
 import DiskWhatsApp from './components/DiskWhatsApp';
 import './App.css';
@@ -141,6 +142,10 @@ function App() {
 
                 <ScrollHighlight>
                   <SampleMusic />
+                </ScrollHighlight>
+
+                <ScrollHighlight>
+                  <PricingTiers />
                 </ScrollHighlight>
 
                 <section style={{

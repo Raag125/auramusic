@@ -379,3 +379,29 @@ h6 {
     padding: 12px 24px;
   }
 }
+
+/* Custom Audio Range Slider */
+.audio-progress {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+}
+.audio-progress:focus {
+  outline: none;
+}
+.audio-progress::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.audio-progress::-webkit-slider-thumb {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -4px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}

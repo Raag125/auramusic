@@ -16,7 +16,7 @@ export default function DiskWhatsApp() {
   const onSend = (e) => {
     e.preventDefault();
     if (!name.trim() || !msg.trim()) return;
-    window.open(`https://wa.me/919999999999?text=${encodeURIComponent(`Hi, I'm ${name}. ${msg}`)}`, '_blank');
+    window.open(`https://wa.me/919425673599?text=${encodeURIComponent(`Hi, I'm ${name}. ${msg}`)}`, '_blank');
     setSent(true);
     setTimeout(() => { setSent(false); setName(''); setMsg(''); }, 3000);
   };

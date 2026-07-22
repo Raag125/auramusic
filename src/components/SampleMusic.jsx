@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Music } from 'lucide-react';
+import { Play, Pause, Music, SkipBack, SkipForward } from 'lucide-react';
 
 const WHITE_KEYS = [
   { id: 1, note: 'C', title: 'Baaton Ka Silsila', genre: 'Custom Song', dur: 'Sample', accent: '#7aaaf0', src: '/music/Baaton_ka_silsila.mp3' },
@@ -39,6 +39,8 @@ const toRgb = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)
 
 export default function SampleMusic() {
   const [playId, setPlayId] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const audioRef = useRef(typeof window !== 'undefined' ? new Audio() : null);
 
@@ -50,16 +52,39 @@ export default function SampleMusic() {
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (audio) {
-      audio.onended = () => setPlayId(null);
-    }
+    if (!audio) return;
+
+    const updateTime = () => setProgress(audio.currentTime);
+    const updateDuration = () => setDuration(audio.duration);
+    const onEnded = () => setPlayId(null);
+
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('loadedmetadata', updateDuration);
+    audio.addEventListener('ended', onEnded);
+
     return () => {
-      if (audio) {
-        audio.pause();
-        audio.src = '';
-      }
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('loadedmetadata', updateDuration);
+      audio.removeEventListener('ended', onEnded);
+      audio.pause();
+      audio.src = '';
     };
   }, []);
+
+  const formatTime = (time) => {
+    if (!time || isNaN(time)) return '0:00';
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleSeek = (e) => {
+    const time = Number(e.target.value);
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+      setProgress(time);
+    }
+  };
 
   const allKeys = [...WHITE_KEYS, ...BLACK_KEYS];
 
@@ -75,6 +100,36 @@ export default function SampleMusic() {
       }
       setPlayId(id);
     }
+  };
+
+  const playNext = () => {
+    if (playId === null) {
+      play(allKeys[0].id);
+      return;
+    }
+    const currentIndex = allKeys.findIndex(k => k.id === playId);
+    const nextIndex = (currentIndex + 1) % allKeys.length;
+    const id = allKeys[nextIndex].id;
+    if (audioRef.current) {
+      audioRef.current.src = allKeys[nextIndex].src;
+      audioRef.current.play().catch(e => console.log('Audio error:', e));
+    }
+    setPlayId(id);
+  };
+
+  const playPrev = () => {
+    if (playId === null) {
+      play(allKeys[allKeys.length - 1].id);
+      return;
+    }
+    const currentIndex = allKeys.findIndex(k => k.id === playId);
+    const prevIndex = (currentIndex - 1 + allKeys.length) % allKeys.length;
+    const id = allKeys[prevIndex].id;
+    if (audioRef.current) {
+      audioRef.current.src = allKeys[prevIndex].src;
+      audioRef.current.play().catch(e => console.log('Audio error:', e));
+    }
+    setPlayId(id);
   };
 
   const activeKey = allKeys.find(k => k.id === playId);
@@ -174,6 +229,8 @@ export default function SampleMusic() {
                         borderRadius: '0 0 6px 6px',
                         display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '14px',
                         transition: 'background 0.35s, border-bottom-color 0.3s',
+                        willChange: 'transform, opacity',
+                        transform: 'translateZ(0)',
                       }}
                     >
                       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', background: 'linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.15))', pointerEvents: 'none' }} />
@@ -238,6 +295,8 @@ export default function SampleMusic() {
                       borderTop: 'none',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '0 3px 10px',
                       transition: 'background 0.35s, border-color 0.3s',
+                      willChange: 'transform, opacity',
+                      transform: 'translateZ(0)',
                     }}
                   >
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '38%', background: 'linear-gradient(to bottom, rgba(255,255,255,0.11), rgba(255,255,255,0.02))', pointerEvents: 'none' }} />
@@ -278,10 +337,27 @@ export default function SampleMusic() {
             />
             <AnimatePresence mode="wait">
               {activeKey ? (
-                <motion.div key={activeKey.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: '0.92rem', color: '#fff' }}>{activeKey.title}</span>
-                  {!isMobile && <span style={{ fontSize: '0.58rem', fontFamily: "'DM Sans', sans-serif", color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{activeKey.genre}</span>}
-                  {!isMobile && <span style={{ fontSize: '0.6rem', fontFamily: "'DM Sans', sans-serif", color: activeKey.accent }}>{activeKey.note} · {activeKey.dur}</span>}
+                <motion.div key={activeKey.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: isMobile ? '80px' : '150px' }}>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: '0.92rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeKey.title}</span>
+                  </div>
+                  
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', padding: '0 10px' }}>
+                    <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px', textAlign: 'right' }}>{formatTime(progress)}</span>
+                    <input 
+                      type="range" 
+                      className="audio-progress"
+                      min="0" 
+                      max={duration || 100} 
+                      value={progress} 
+                      onChange={handleSeek}
+                      style={{
+                        flex: 1,
+                        background: `linear-gradient(to right, ${activeKey.accent} ${(progress / (duration || 1)) * 100}%, rgba(255,255,255,0.1) ${(progress / (duration || 1)) * 100}%)`,
+                      }}
+                    />
+                    <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif", width: '25px' }}>{formatTime(duration)}</span>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.7rem', color: 'rgba(200,160,80,0.38)', letterSpacing: '0.18em', textTransform: 'uppercase', flex: 1 }}>
@@ -289,7 +365,19 @@ export default function SampleMusic() {
                 </motion.span>
               )}
             </AnimatePresence>
-            <Music size={13} color="rgba(200,160,80,0.28)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={playPrev} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '50%', width: '28px', height: '28px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <SkipBack size={12} color="rgba(255,255,255,0.7)" />
+              </motion.button>
+              
+              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => play(playId || allKeys[0].id)} style={{ background: activeKey ? activeKey.accent : 'rgba(255,255,255,0.1)', borderRadius: '50%', width: '32px', height: '32px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: activeKey ? `0 2px 10px ${activeKey.accent}80` : 'none' }}>
+                {playId ? <Pause size={14} color="#fff" /> : <Play size={14} color="#fff" style={{ marginLeft: '2px' }} />}
+              </motion.button>
+
+              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={playNext} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '50%', width: '28px', height: '28px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <SkipForward size={12} color="rgba(255,255,255,0.7)" />
+              </motion.button>
+            </div>
           </motion.div>
         </div>
       </div>
