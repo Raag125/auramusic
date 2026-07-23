@@ -27,6 +27,13 @@ const FOOTER_CONFIG = {
 function App() {
   const [loading, setLoading] = useState(true);
   const [themeColor, setThemeColor] = useState('#aaaaaa');
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const handleThemeChange = useCallback((color) => {
     setThemeColor(color);
@@ -101,19 +108,21 @@ function App() {
               transition={{ duration: 1.5, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
               style={{
                 position: 'fixed',
-                top: '2.5rem',
-                right: '5vw',
+                top: isMobile ? '1rem' : '2.5rem',
+                right: isMobile ? '50%' : '5vw',
+                transform: isMobile ? 'translateX(50%)' : 'none',
                 zIndex: 100,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '18px',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: isMobile ? '6px' : '18px',
                 pointerEvents: 'none'
               }}
             >
-              <img src="/logo.jpeg" alt="AURA Music Logo" style={{ width: '72px', height: '72px', minWidth: '72px', flexShrink: 0, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid rgba(255,255,255,0.2)', boxShadow: '0 6px 25px rgba(0,0,0,0.6)' }} />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontFamily: "'Syncopate', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '4px' }}>AURA</span>
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', fontWeight: 500, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.35em', textTransform: 'uppercase', marginTop: '2px' }}>Music</span>
+              <img src="/logo.jpeg" alt="AURA Music Logo" style={{ width: isMobile ? '44px' : '72px', height: isMobile ? '44px' : '72px', minWidth: isMobile ? '44px' : '72px', flexShrink: 0, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid rgba(255,255,255,0.2)', boxShadow: '0 6px 25px rgba(0,0,0,0.6)' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-start' }}>
+                <span style={{ fontFamily: "'Syncopate', sans-serif", fontSize: isMobile ? '0.75rem' : '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: isMobile ? '3px' : '4px' }}>AURA</span>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: isMobile ? '0.55rem' : '0.78rem', fontWeight: 500, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.35em', textTransform: 'uppercase', marginTop: '1px' }}>Music</span>
               </div>
             </motion.div>
 
