@@ -22,6 +22,7 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -30,6 +31,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   background-color: var(--bg-color);
+  overscroll-behavior-y: none;
 }
 
 #root {
@@ -71,7 +73,8 @@ section {
   border-radius: 16px;
   padding: 1.8rem 1.5rem;
   /* Forces generous breathing room for the text inside the borders */
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: border 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform;
 }
 
 .tier-card:hover,
@@ -189,18 +192,18 @@ h6 {
     padding: 0 15px;
   }
 
-  /* 🚀 GPU-ACCELERATED MOBILE BLUR 🚀
-     Instead of globally disabling blur which removes the premium glass effect, 
-     we enforce dedicated hardware layers using 'translateZ' to stop the 60FPS
-     scroll jitter while retaining the beautiful translucent aesthetic! */
+  /* 🚀 GPU-ACCELERATED MOBILE PERFORMANCE FIX 🚀
+     Disabling heavy backdrop-filter blur on mobile eliminates GPU frame buffer sampling,
+     giving instant 60 FPS silky smooth mobile swiping! */
   .tier-card,
   .hero-panel,
   .glass-panel {
-    background: rgb(10, 10, 16) !important;
-    /* Darker & completely opaque for text */
-    backdrop-filter: blur(28px) saturate(1.3) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(1.3) !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    background: rgba(12, 12, 18, 0.94) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    transform: translateZ(0);
+    will-change: transform;
   }
 
   /* Tier cards switch to single column for better text readability on mobile */

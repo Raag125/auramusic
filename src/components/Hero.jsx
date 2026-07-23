@@ -4,6 +4,24 @@ import { PlayCircle, PauseCircle, Volume2, VolumeX, SlidersHorizontal, SkipBack,
 import { Influenced } from '../hooks/useDiskInfluence';
 import { diskState } from '../systems/diskPosition';
 
+// =========================================================================
+// 🎛️ EASY POSITION ADJUSTMENT CONFIGURATION
+// Tweak any of these values (in px or rem) to manually position text & player!
+// =========================================================================
+export const HERO_LAYOUT_CONFIG = {
+  // Overall Section Top Padding (e.g. '50px', '70px', '100px')
+  paddingTop: '70px',
+
+  // Hero Text Block Offsets
+  textOffsetY: 0,   // e.g. -30 to move text UP, 30 to move text DOWN (in px)
+  textOffsetX: 0,   // e.g. -20 to move text LEFT, 20 to move text RIGHT (in px)
+
+  // Music Player Panel Offsets
+  playerOffsetY: 0, // e.g. -20 to move player UP, 20 to move player DOWN (in px)
+  playerOffsetX: 0, // e.g. -20 to move player LEFT, 20 to move player RIGHT (in px)
+  playerMarginTop: '2.2rem', // space above the player bar
+};
+
 function StudioEqualizer({ barCount = 12, isPlaying, isMobile }) {
   const count = isMobile ? 5 : barCount;
   return (
@@ -93,12 +111,13 @@ export default function Hero() {
       style={{
         height: '100vh', width: '100%',
         display: 'flex', flexDirection: 'column',
-        alignItems: 'flex-start', justifyContent: 'center',
-        padding: '0 8vw', position: 'relative',
+        alignItems: 'flex-start', justifyContent: 'flex-start',
+        padding: isMobile ? '70px 5vw 0 5vw' : `${HERO_LAYOUT_CONFIG.paddingTop} 8vw 0 8vw`, position: 'relative',
         overflow: 'hidden', zIndex: 10, background: 'transparent',
+        boxSizing: 'border-box'
       }}
     >
-      {}
+      {/* Noise Texture */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none', opacity: 0.04, backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
 
       <motion.div
@@ -107,7 +126,8 @@ export default function Hero() {
           opacity: isMobile ? 1 : opacity,
           scale: isMobile ? 1 : scale,
           zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', width: '100%', maxWidth: '800px',
-          willChange: 'transform, opacity'
+          willChange: 'transform, opacity',
+          transform: `translate(${HERO_LAYOUT_CONFIG.textOffsetX}px, ${HERO_LAYOUT_CONFIG.textOffsetY}px)`
         }}
       >
         {}
@@ -225,13 +245,15 @@ export default function Hero() {
         </motion.h2>
 
         {}
+        {/* Equalizer & Audio Controls */}
         <motion.div
           className="hero-panel"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, delay: 1.1, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            marginTop: '4rem',
+            marginTop: HERO_LAYOUT_CONFIG.playerMarginTop,
+            transform: `translate(${HERO_LAYOUT_CONFIG.playerOffsetX}px, ${HERO_LAYOUT_CONFIG.playerOffsetY}px)`,
             display: 'flex',
             flexDirection: isMobile ? 'column' : 'row',
             alignItems: 'center',
@@ -240,8 +262,8 @@ export default function Hero() {
             border: '1px solid rgba(255,255,255,0.08)',
             padding: isMobile ? '20px' : '20px 30px',
             borderRadius: isMobile ? '32px' : '100px',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
+            backdropFilter: isMobile ? 'none' : 'blur(24px)',
+            WebkitBackdropFilter: isMobile ? 'none' : 'blur(24px)',
             boxShadow: '0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
             width: isMobile ? '88%' : 'auto',
             maxWidth: isMobile ? '340px' : 'none',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Briefcase, Users, Activity, ChevronRight } from 'lucide-react';
 
@@ -31,6 +31,13 @@ const occasions = [
 
 export default function OccasionTiers() {
   const [hovered, setHovered] = useState(null);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   return (
     <section className="responsive-tier-section" style={{
@@ -38,12 +45,12 @@ export default function OccasionTiers() {
       display: 'flex', alignItems: 'center',
       position: 'relative', gap: '5vw',
     }}>
-      {}
+      {/* Spacer for 3D Disk */}
       <div className="tier-spacer" style={{ flex: '0 0 46%' }} />
 
-      {}
+      {/* Cards Container */}
       <div className="responsive-tier-cards" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.6rem', zIndex: 10 }}>
-        {}
+        {/* Header */}
         <div>
           <p style={{ margin: 0, fontSize: '0.68rem', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', fontFamily: "'DM Sans', sans-serif", textTransform: 'uppercase', fontWeight: 500 }}>
             01 — Use Case
@@ -53,7 +60,7 @@ export default function OccasionTiers() {
           </h2>
         </div>
 
-        {}
+        {/* 2x2 Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.95rem' }}>
           {occasions.map((occ, i) => {
             const Icon = occ.icon;
@@ -62,10 +69,10 @@ export default function OccasionTiers() {
               <motion.div
                 key={i}
                 className="tier-card"
-                initial={{ opacity: 0, scale: 0.8, y: 30 }}
+                initial={{ opacity: 0, scale: isMobile ? 0.95 : 0.8, y: isMobile ? 15 : 30 }}
                 whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ type: "spring", stiffness: 120, damping: 14, delay: i * 0.1 }}
+                viewport={{ once: true, margin: isMobile ? "0px" : "-50px" }}
+                transition={{ type: isMobile ? "tween" : "spring", stiffness: 120, damping: 14, duration: isMobile ? 0.35 : undefined, delay: isMobile ? i * 0.04 : i * 0.1 }}
                 onHoverStart={() => setHovered(i)}
                 onHoverEnd={() => setHovered(null)}
                 whileHover={{ y: -6, x: 4 }}
@@ -81,6 +88,8 @@ export default function OccasionTiers() {
                   transition: 'border 0.3s ease',
                   display: 'flex', flexDirection: 'column', gap: '1rem',
                   position: 'relative', overflow: 'hidden',
+                  transform: 'translateZ(0)',
+                  willChange: 'transform, opacity',
                 }}
               >
                 {}

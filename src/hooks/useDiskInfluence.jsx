@@ -75,6 +75,15 @@ export function useDiskInfluence(options = {}) {
       // Guard against unmounted elements
       if (!el || !el.isConnected) return;
 
+      // On mobile devices, skip proximity calculations to eliminate CPU overhead during touch swiping
+      if (window.innerWidth < 768) {
+        if (el.style.transform !== '') {
+          el.style.transform = '';
+        }
+        rafId.current = requestAnimationFrame(tick);
+        return;
+      }
+
       // Calculate current viewport position using cached absolute + scroll (Zero Layout Thrashing!)
       const elCX = cachedRect.current.absoluteCX - window.scrollX;
       const elCY = cachedRect.current.absoluteCY - window.scrollY;

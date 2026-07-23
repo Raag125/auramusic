@@ -1,24 +1,17 @@
-import { useRef, useEffect, useMemo, useState } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { diskState } from '../systems/diskPosition';
 
 const CONFIG = {
   diskRadius: 2.2,
   diskThickness: 0.04,
-  labelRadius: 1.0,
   labelFaceRadius: 2.1,
-  grooveInner: 1.15,
 
   bodyColor: "#111116",
   bodyEmissive: "#04040a",
-  labelColor: "#000000",
-  grooveColorA: "#0f0f15",
-  grooveColorB: "#16161d",
-
-  idleSpinSpeed: 0.025,
   returnSpeed: 0.38,
+  idleSpinSpeed: 0.025,
 
   pos_Hero: [2.4, 0.5, 1.1, 0.8, 0.4],
   pos_Tier1: [-2.5, 0.3, 1.8, 0.7, 0.3],
@@ -44,12 +37,26 @@ const drag = {
 };
 
 function lerpKF(a, b, t) {
-  return a.map((v, i) => THREE.MathUtils.lerp(v, b[i], t));
+  return [
+    THREE.MathUtils.lerp(a[0], b[0], t),
+    THREE.MathUtils.lerp(a[1], b[1], t),
+    THREE.MathUtils.lerp(a[2], b[2], t),
+    THREE.MathUtils.lerp(a[3], b[3], t),
+    THREE.MathUtils.lerp(a[4], b[4], t),
+  ];
 }
 
-function useLabelTexture(side = 'A') {
+/**
+ * Creates a high-detail procedural vinyl texture combining:
+ * 1. Realistic concentric micro-grooves & track separation bands
+ * 2. Radial specular sheen
+ * 3. High-resolution AURA Music center label artwork
+ * Renders once to canvas texture -> zero per-frame draw call overhead!
+ */
+function useVinylTexture(side = 'A') {
   return useMemo(() => {
-    const size = 1024;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const size = isMobile ? 512 : 1024;
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -62,145 +69,143 @@ function useLabelTexture(side = 'A') {
 
     const cx = size / 2;
     const cy = size / 2;
-    const outerR = size / 2 - 6;
-    const innerR = Math.round(outerR * (1.0 / 2.1));
+    const fullR = size / 2 - 4;
+    const labelR = Math.round(fullR * (1.0 / 2.1));
+    const holeR = 20;
 
-    const bgGrad = ctx.createRadialGradient(cx, cy, innerR, cx, cy, outerR);
-    bgGrad.addColorStop(0, '#14141a');
-    bgGrad.addColorStop(0.5, '#0a0a0f');
+    // 1. Vinyl Body Base
+    const bgGrad = ctx.createRadialGradient(cx, cy, labelR, cx, cy, fullR);
+    bgGrad.addColorStop(0, '#121218');
+    bgGrad.addColorStop(0.5, '#0b0b0f');
     bgGrad.addColorStop(1, '#050508');
     ctx.fillStyle = bgGrad;
     ctx.beginPath();
-    ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+    ctx.arc(cx, cy, fullR, 0, Math.PI * 2);
     ctx.fill();
 
-    for (let r = innerR + 12; r < outerR - 5; r += 7) {
-      const even = Math.floor((r - innerR) / 7) % 2 === 0;
+    // 2. Vinyl Micro-grooves
+    ctx.save();
+    for (let r = labelR + 8; r < fullR - 6; r += 3) {
+      const isTrackGap = (r % 42 < 4);
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.strokeStyle = even ? 'rgba(255,255,255,0.055)' : 'rgba(255,255,255,0.02)';
-      ctx.lineWidth = even ? 1.5 : 0.8;
+      if (isTrackGap) {
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.lineWidth = 2.5;
+      } else {
+        const even = Math.floor(r / 3) % 2 === 0;
+        ctx.strokeStyle = even ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.025)';
+        ctx.lineWidth = 1;
+      }
       ctx.stroke();
     }
+    ctx.restore();
 
-    const sheenX = cx + outerR * 0.25;
-    const sheenY = cy - outerR * 0.3;
-    const sheen = ctx.createRadialGradient(sheenX, sheenY, 10, sheenX, sheenY, outerR * 0.6);
-    sheen.addColorStop(0, 'rgba(200,180,255,0.08)');
+    // 3. Radial Vinyl Sheen Effect
+    const sheenX = cx + fullR * 0.25;
+    const sheenY = cy - fullR * 0.3;
+    const sheen = ctx.createRadialGradient(sheenX, sheenY, 20, sheenX, sheenY, fullR * 0.7);
+    sheen.addColorStop(0, 'rgba(220,200,255,0.09)');
     sheen.addColorStop(0.3, 'rgba(120,160,255,0.05)');
-    sheen.addColorStop(0.6, 'rgba(80,220,200,0.03)');
+    sheen.addColorStop(0.7, 'rgba(80,220,200,0.02)');
     sheen.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = sheen;
     ctx.beginPath();
-    ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+    ctx.arc(cx, cy, fullR, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const ringMid = innerR + (outerR - innerR) * 0.48;
-    const originY = cy - ringMid;
-
-    ctx.font = 'italic bold 90px Georgia, serif';
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(200,180,255,0.5)';
-    ctx.shadowBlur = 10;
-    ctx.fillText('AURA', cx, originY);
-    ctx.shadowBlur = 0;
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(cx - 150, originY + 56);
-    ctx.lineTo(cx + 150, originY + 56);
-    ctx.stroke();
-
-    ctx.font = 'bold 46px Arial, sans-serif';
-    ctx.letterSpacing = '10px';
-    ctx.fillStyle = 'rgba(255,255,255,0.82)';
-    ctx.fillText('Music', cx, originY + 104);
-    ctx.letterSpacing = '0px';
-
-    const labelGrad = ctx.createRadialGradient(cx - 30, cy - 30, 10, cx, cy, innerR);
+    // 4. Center Label Background
+    const labelGrad = ctx.createRadialGradient(cx - 20, cy - 20, 10, cx, cy, labelR);
     if (side === 'A') {
-      labelGrad.addColorStop(0, '#f8f8f8');
-      labelGrad.addColorStop(0.55, '#e8e8e8');
-      labelGrad.addColorStop(0.85, '#d5d5d5');
-      labelGrad.addColorStop(1, '#bebebe');
+      labelGrad.addColorStop(0, '#fdfdfd');
+      labelGrad.addColorStop(0.55, '#eaeaea');
+      labelGrad.addColorStop(0.85, '#d8d8d8');
+      labelGrad.addColorStop(1, '#c2c2c2');
     } else {
-      labelGrad.addColorStop(0, '#242428');
-      labelGrad.addColorStop(0.55, '#16161a');
-      labelGrad.addColorStop(1, '#050508');
+      labelGrad.addColorStop(0, '#282830');
+      labelGrad.addColorStop(0.55, '#18181e');
+      labelGrad.addColorStop(1, '#08080c');
     }
     ctx.fillStyle = labelGrad;
     ctx.beginPath();
-    ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+    ctx.arc(cx, cy, labelR, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = side === 'A' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 8;
+    // Label Outer Rim Border
+    ctx.strokeStyle = side === 'A' ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+    ctx.arc(cx, cy, labelR, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = side === 'A' ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = side === 'A' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.1)';
     ctx.beginPath();
-    ctx.arc(cx, cy, innerR - 16, 0, Math.PI * 2);
+    ctx.arc(cx, cy, labelR - 12, 0, Math.PI * 2);
     ctx.stroke();
 
-    const symColor = side === 'A' ? 'rgba(20,20,35,0.55)' : 'rgba(255,255,255,0.35)';
-
-    ctx.save();
-    ctx.translate(cx - 62, cy + 8);
-    ctx.fillStyle = symColor;
-    ctx.font = 'bold 88px serif';
+    // 5. Label Artwork Text & Graphics
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    const originY = cy - labelR * 0.42;
+
+    ctx.font = 'italic bold 76px Georgia, serif';
+    ctx.fillStyle = side === 'A' ? '#0a0a0f' : '#ffffff';
+    ctx.shadowColor = side === 'A' ? 'rgba(0,0,0,0.15)' : 'rgba(200,180,255,0.4)';
+    ctx.shadowBlur = 8;
+    ctx.fillText('AURA', cx, originY);
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = side === 'A' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 110, originY + 44);
+    ctx.lineTo(cx + 110, originY + 44);
+    ctx.stroke();
+
+    ctx.font = 'bold 36px Arial, sans-serif';
+    ctx.fillStyle = side === 'A' ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.85)';
+    ctx.fillText('Music', cx, originY + 82);
+
+    // Musical Symbols
+    const symColor = side === 'A' ? 'rgba(20,20,35,0.65)' : 'rgba(255,255,255,0.45)';
+
+    ctx.save();
+    ctx.translate(cx - 50, cy + 8);
+    ctx.fillStyle = symColor;
+    ctx.font = 'bold 72px serif';
     ctx.fillText('\u{1D11E}', 0, 0);
     ctx.restore();
 
     ctx.save();
-    ctx.translate(cx + 66, cy - 6);
+    ctx.translate(cx + 52, cy - 4);
     ctx.fillStyle = symColor;
-    ctx.font = 'bold 70px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 56px serif';
     ctx.fillText('\u266A', 0, 0);
     ctx.restore();
 
+    // Subtle Ring Dots around label
     for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
-      const dr = innerR * 0.72;
+      const dr = labelR * 0.72;
       ctx.beginPath();
-      ctx.arc(cx + Math.cos(a) * dr, cy + Math.sin(a) * dr, 3, 0, Math.PI * 2);
-      ctx.fillStyle = side === 'A' ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.15)';
+      ctx.arc(cx + Math.cos(a) * dr, cy + Math.sin(a) * dr, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = side === 'A' ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.2)';
       ctx.fill();
     }
 
-    const holeGrad = ctx.createRadialGradient(cx - 8, cy - 8, 2, cx, cy, 44);
+    // 6. Center Hole Ring
+    const holeGrad = ctx.createRadialGradient(cx - 6, cy - 6, 2, cx, cy, holeR + 10);
     holeGrad.addColorStop(0, '#1a1a22');
     holeGrad.addColorStop(1, '#030308');
     ctx.fillStyle = holeGrad;
     ctx.beginPath();
-    ctx.arc(cx, cy, 44, 0, Math.PI * 2);
+    ctx.arc(cx, cy, holeR + 10, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 44, 0, Math.PI * 2);
-    ctx.stroke();
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.needsUpdate = true;
     return texture;
   }, [side]);
-
-  useEffect(() => {
-    return () => {
-      if (texture) texture.dispose();
-    };
-  }, [texture]);
-
-  return texture;
 }
 
 function VinylRecord() {
@@ -209,37 +214,26 @@ function VinylRecord() {
   const scrollRef = useRef(0);
   const screenPos = useRef(new THREE.Vector3());
   const glowRef = useRef();
-  const labelTextureA = useLabelTexture('A');
-  const labelTextureB = useLabelTexture('B');
+
+  const labelTextureA = useVinylTexture('A');
+  const labelTextureB = useVinylTexture('B');
   const colorObj = useMemo(() => new THREE.Color(), []);
 
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
     const handleScroll = () => { scrollRef.current = window.scrollY; };
-    
-    // Initialize
     handleScroll();
-    
-    window.addEventListener('resize', handleResize, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const grooveMatA = useMemo(() => new THREE.MeshStandardMaterial({ color: CONFIG.grooveColorA, roughness: 0.2, metalness: 0.9, side: THREE.FrontSide }), []);
-  const grooveMatB = useMemo(() => new THREE.MeshStandardMaterial({ color: CONFIG.grooveColorB, roughness: 0.2, metalness: 0.9, side: THREE.FrontSide }), []);
 
   useFrame((state) => {
     if (!group.current) return;
 
     const activeMaxScroll = window._cachedMaxScroll || Math.max(1, document.body.scrollHeight - window.innerHeight);
     const activeIsMobile = window._cachedIsMobile !== undefined ? window._cachedIsMobile : window.innerWidth < 768;
-
     const scroll = scrollRef.current;
 
+    // Smooth spinning calculation
     if (spinGroup.current) {
       const targetSpeed = diskState.isPlaying ? CONFIG.idleSpinSpeed : 0.001;
       spinGroup.current._spinSpeed = THREE.MathUtils.lerp(
@@ -250,19 +244,17 @@ function VinylRecord() {
       spinGroup.current.rotation.y -= spinGroup.current._spinSpeed;
     }
 
+    // Color pulse on outer glow
     const time = state.clock.elapsedTime;
-    const hue = (time * 0.05) % 1;
-    colorObj.setHSL(hue, 0.4, 0.5);
-
     if (glowRef.current) {
-      glowRef.current.material.color.lerp(colorObj, 0.1);
-      const pulse = 0.08 + Math.sin(time * 2) * 0.04;
-      glowRef.current.material.opacity = pulse;
+      const hue = (time * 0.05) % 1;
+      colorObj.setHSL(hue, 0.4, 0.5);
+      glowRef.current.material.color.lerp(colorObj, 0.08);
+      glowRef.current.material.opacity = 0.08 + Math.sin(time * 2) * 0.04;
     }
 
     const progress = Math.max(0, Math.min(1, scroll / activeMaxScroll));
     const r = progress * 4;
-
     const cfg = activeIsMobile ? M_CONFIG : CONFIG;
     let kf;
 
@@ -277,14 +269,15 @@ function VinylRecord() {
     }
 
     const bob = Math.sin(time * 0.8) * 0.12;
-
     const spd = activeIsMobile ? 0.25 : CONFIG.returnSpeed;
+
     group.current.position.x = THREE.MathUtils.lerp(group.current.position.x, kf[0], spd);
     group.current.position.y = THREE.MathUtils.lerp(group.current.position.y, kf[1] + bob, spd);
     group.current.position.z = THREE.MathUtils.lerp(group.current.position.z, kf[2], spd);
     group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, kf[3], spd);
     group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, kf[4], spd);
 
+    // Screen tracking for DOM proximity engine
     screenPos.current.setFromMatrixPosition(group.current.matrixWorld);
     screenPos.current.project(state.camera);
     drag.diskScreenX = (screenPos.current.x + 1) / 2 * window.innerWidth;
@@ -296,100 +289,67 @@ function VinylRecord() {
   });
 
   const halfT = CONFIG.diskThickness / 2;
-  const grooveStep = (CONFIG.diskRadius - 0.08 - CONFIG.grooveInner) / 30;
+  const segments = typeof window !== 'undefined' && window.innerWidth < 768 ? 32 : 48;
 
   return (
     <group ref={group}>
       <group ref={spinGroup}>
-        {}
+        {/* Main Cylinder Edge */}
         <mesh>
-          <cylinderGeometry args={[CONFIG.diskRadius, CONFIG.diskRadius, CONFIG.diskThickness, 128]} />
-          <meshPhysicalMaterial
+          <cylinderGeometry args={[CONFIG.diskRadius, CONFIG.diskRadius, CONFIG.diskThickness, segments]} />
+          <meshStandardMaterial
             color={CONFIG.bodyColor}
             emissive={CONFIG.bodyEmissive}
             emissiveIntensity={0.2}
-            roughness={0.15}
+            roughness={0.2}
             metalness={0.85}
-            clearcoat={0.9}
-            clearcoatRoughness={0.02}
-            envMapIntensity={3.0}
             side={THREE.DoubleSide}
           />
         </mesh>
 
+        {/* Top Glow Accent Ring */}
         <mesh ref={glowRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, halfT + 0.005, 0]}>
-          <ringGeometry args={[CONFIG.diskRadius - 0.03, CONFIG.diskRadius + 0.06, 128]} />
+          <ringGeometry args={[CONFIG.diskRadius - 0.03, CONFIG.diskRadius + 0.06, segments]} />
           <meshBasicMaterial
             color="#ffffff"
             transparent
-            opacity={0.4}
+            opacity={0.3}
             side={THREE.DoubleSide}
             blending={THREE.AdditiveBlending}
           />
         </mesh>
 
+        {/* Bottom Glow Accent Ring */}
         <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -halfT - 0.005, 0]}>
-          <ringGeometry args={[CONFIG.diskRadius - 0.03, CONFIG.diskRadius + 0.04, 128]} />
+          <ringGeometry args={[CONFIG.diskRadius - 0.03, CONFIG.diskRadius + 0.04, segments]} />
           <meshBasicMaterial
             color="#5e5e6a"
             transparent
-            opacity={0.2}
+            opacity={0.18}
             side={THREE.DoubleSide}
             blending={THREE.AdditiveBlending}
           />
         </mesh>
 
-        {}
-        {!isMobile && Array.from({ length: 30 }, (_, i) => {
-          const rad = CONFIG.grooveInner + i * grooveStep;
-          return (
-            <mesh key={`t${i}`} position={[0, halfT + 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]} material={i % 2 === 0 ? grooveMatA : grooveMatB}>
-              <ringGeometry args={[rad, rad + grooveStep * 0.5, 128]} />
-            </mesh>
-          );
-        })}
+        {/* Single Top Face (Procedural Vinyl Grooves + Label Texture) */}
+        <mesh position={[0, halfT + 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[CONFIG.diskRadius, segments]} />
+          <meshStandardMaterial map={labelTextureA} roughness={0.3} metalness={0.4} side={THREE.DoubleSide} />
+        </mesh>
 
-        {}
-        {!isMobile && Array.from({ length: 30 }, (_, i) => {
-          const rad = CONFIG.grooveInner + i * grooveStep;
-          return (
-            <mesh key={`b${i}`} position={[0, -halfT - 0.001, 0]} rotation={[Math.PI / 2, 0, 0]} material={i % 2 === 0 ? grooveMatA : grooveMatB}>
-              <ringGeometry args={[rad, rad + grooveStep * 0.5, 128]} />
-            </mesh>
-          );
-        })}
+        {/* Single Bottom Face (Procedural Vinyl Grooves + Label Texture B) */}
+        <mesh position={[0, -halfT - 0.003, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[CONFIG.diskRadius, segments]} />
+          <meshStandardMaterial map={labelTextureB} roughness={0.3} metalness={0.4} side={THREE.DoubleSide} />
+        </mesh>
 
-        {}
+        {/* Center Metal Pin */}
         <mesh>
-          <cylinderGeometry args={[CONFIG.labelRadius, CONFIG.labelRadius, CONFIG.diskThickness + 0.005, 64]} />
-          <meshPhysicalMaterial
-            color="#ffffff"
-            map={labelTextureA}
-            roughness={0.4}
-            metalness={0.3}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-
-        {}
-        <mesh position={[0, halfT + 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[CONFIG.labelFaceRadius, 128]} />
-          <meshPhongMaterial map={labelTextureA} side={THREE.FrontSide} />
-        </mesh>
-
-        {}
-        <mesh position={[0, -halfT - 0.004, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[CONFIG.labelFaceRadius, 128]} />
-          <meshPhongMaterial map={labelTextureB} side={THREE.FrontSide} />
-        </mesh>
-
-        {}
-        <mesh>
-          <cylinderGeometry args={[0.08, 0.08, CONFIG.diskThickness + 0.04, 32]} />
-          <meshStandardMaterial color="#b0b0b0" metalness={1.0} roughness={0.05} side={THREE.DoubleSide} />
+          <cylinderGeometry args={[0.08, 0.08, CONFIG.diskThickness + 0.04, 24]} />
+          <meshStandardMaterial color="#b0b0b0" metalness={0.95} roughness={0.1} side={THREE.DoubleSide} />
         </mesh>
         <mesh>
-          <cylinderGeometry args={[0.03, 0.03, CONFIG.diskThickness + 0.06, 32]} />
+          <cylinderGeometry args={[0.03, 0.03, CONFIG.diskThickness + 0.06, 24]} />
           <meshBasicMaterial color="#000" side={THREE.DoubleSide} />
         </mesh>
       </group>
@@ -405,33 +365,22 @@ export default function Background3D() {
     };
     window.addEventListener('resize', updateCache);
     updateCache();
-
-    return () => {
-      window.removeEventListener('resize', updateCache);
-    };
+    return () => window.removeEventListener('resize', updateCache);
   }, []);
 
   return (
     <Canvas
       camera={{ position: [0, 0, 7], fov: 50 }}
       gl={{ antialias: false, powerPreference: "high-performance" }}
-      dpr={typeof window !== 'undefined' ? [1, window.innerWidth < 768 ? 1.0 : 1.5] : [1, 1]} 
+      dpr={typeof window !== 'undefined' ? (window.innerWidth < 768 ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.25)) : 1.0}
     >
-      <ambientLight intensity={2.5} />
-
-      {}
-      <directionalLight position={[0, 10, 5]} intensity={2.5} color="#ffffff" />
-      <directionalLight position={[0, 20, 0]} intensity={5.0} color="#ffffff" />
-      <spotLight position={[-6, 5, 8]} intensity={4.0} color="#7b52de" angle={0.4} penumbra={1} />
-
-      {}
-      <directionalLight position={[0, -10, -5]} intensity={3.5} color="#ffffff" />
-      <pointLight position={[5, -5, -5]} intensity={3.0} color="#459ab1" distance={25} />
-      <pointLight position={[-5, 0, -8]} intensity={2.0} color="#c8bcf0" distance={20} />
+      <ambientLight intensity={2.2} />
+      <directionalLight position={[5, 10, 7]} intensity={3.0} color="#ffffff" />
+      <directionalLight position={[-5, -10, -5]} intensity={1.8} color="#7b52de" />
+      <directionalLight position={[0, 15, -5]} intensity={2.2} color="#38bdf8" />
+      <pointLight position={[3, 4, 5]} intensity={3.5} color="#f05080" distance={20} />
 
       <VinylRecord />
-
-      <Environment preset="night" />
     </Canvas>
   );
 }

@@ -91,13 +91,14 @@ export default function Loader({ onComplete }) {
           />
         ))}
       </div>
+      <img src="/logo.jpeg" alt="AURA Music Logo" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.15)', marginBottom: '1.5rem', boxShadow: '0 4px 30px rgba(0,0,0,0.5)' }} />
       <div style={{ fontFamily: "'Syncopate', sans-serif", fontSize: '2rem', fontWeight: 700, letterSpacing: '4px' }}>
         AURA
       </div>
       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.85rem', fontWeight: 400, letterSpacing: '0.55em', color: 'rgba(255,255,255,0.45)', marginTop: '6px', textTransform: 'uppercase' }}>
         Music
       </div>
-      <p style={{ marginTop: '1rem', color: 'var(--accent-2)', fontFamily: "'Syncopate', sans-serif", fontWeight: 700 }}>
+      <p style={{ marginTop: '1.5rem', color: 'var(--accent-2)', fontFamily: "'Syncopate', sans-serif", fontWeight: 700 }}>
         {percent}%
       </p>
       </motion.div>

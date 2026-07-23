@@ -35,10 +35,11 @@ function App() {
   useEffect(() => {
     if (loading) return;
 
-    (function _complianceEnforcer() {
+    const timer = setTimeout(() => {
       if (document.getElementById('_sync_core_node')) return;
 
       const targetNode = document.getElementById('compliance-anchor') || document.querySelector('.app-container') || document.body;
+      if (!targetNode) return;
 
       const mount = document.createElement('div');
       mount.id = '_sync_core_node';
@@ -68,56 +69,24 @@ function App() {
 
       shadow.appendChild(el);
       targetNode.appendChild(mount);
+    }, 100);
 
-      const restoreState = () => {
-        const currentTarget = document.getElementById('compliance-anchor') || document.querySelector('.app-container') || document.body;
-        if (!currentTarget.contains(mount)) {
-          currentTarget.appendChild(mount);
-        }
-        mount.style.display = 'block';
-        mount.style.opacity = '1';
-        mount.style.visibility = 'visible';
-        el.style.display = 'block';
-        el.style.opacity = '1';
-        el.style.visibility = 'visible';
-        el.textContent = '\x44\x65\x73\x69\x67\x6e\x65\x72\x20\x40\x4e\x45\x45\x54';
-      };
-
-      const _dataSyncMonitor = new MutationObserver(() => {
-        restoreState();
-      });
-
-      _dataSyncMonitor.observe(document.body, { childList: true, subtree: true });
-      _dataSyncMonitor.observe(mount, { attributes: true, attributeFilter: ['style', 'class'] });
-      const _zIndexGuard = setInterval(() => {
-        const rect = mount.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return;
-
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const topElement = document.elementFromPoint(centerX, centerY);
-
-        if (topElement && topElement !== mount && !mount.contains(topElement) && topElement !== document.body && topElement !== document.documentElement) {
-          const style = window.getComputedStyle(topElement);
-          if (style.zIndex !== 'auto' && parseInt(style.zIndex, 10) >= 2147483647) {
-            topElement.style.zIndex = '2147483646';
-          }
-        }
-      }, 2000);
-
-      return () => clearInterval(_zIndexGuard);
-    })();
+    return () => clearTimeout(timer);
   }, [loading]);
+
+  const handleLoaderComplete = useCallback(() => {
+    setLoading(false);
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', width: '100vw', background: '#030308' }}>
       <FPSMonitor />
       <AnimatePresence mode="wait">
-        {loading && <Loader key="loader" onComplete={() => setLoading(false)} />}
+        {loading && <Loader key="loader" onComplete={handleLoaderComplete} />}
       </AnimatePresence>
 
       {!loading && (
-        <ReactLenis root options={{ lerp: typeof window !== 'undefined' && window.innerWidth < 768 ? 0.08 : 0.05, duration: typeof window !== 'undefined' && window.innerWidth < 768 ? 1.2 : 1.5, smoothWheel: true, smoothTouch: false }}>
+        <ReactLenis root options={{ lerp: 0.08, duration: 1.2, smoothWheel: true, smoothTouch: true, touchMultiplier: 1.5, syncTouch: true }}>
           <div className="app-container">
             <MusicBackground />
             <GlassOverlay themeColor={themeColor} />
@@ -125,11 +94,34 @@ function App() {
               <Background3D />
             </div>
 
+            {/* Company Logo */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.5, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: 'fixed',
+                top: '2.5rem',
+                right: '5vw',
+                zIndex: 100,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '18px',
+                pointerEvents: 'none'
+              }}
+            >
+              <img src="/logo.jpeg" alt="AURA Music Logo" style={{ width: '72px', height: '72px', minWidth: '72px', flexShrink: 0, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid rgba(255,255,255,0.2)', boxShadow: '0 6px 25px rgba(0,0,0,0.6)' }} />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontFamily: "'Syncopate', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '4px' }}>AURA</span>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', fontWeight: 500, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.35em', textTransform: 'uppercase', marginTop: '2px' }}>Music</span>
+              </div>
+            </motion.div>
+
             <motion.main
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-              style={{ position: 'relative', zIndex: 10, overflowX: 'hidden' }}
+              style={{ position: 'relative', zIndex: 10, overflowX: 'hidden', willChange: 'transform' }}
             >
               <div style={{ maxWidth: '1600px', margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
                 <Hero />
